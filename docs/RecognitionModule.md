@@ -33,8 +33,7 @@ pip install zarathustra
         
     -   [ArcFace](https://chatgpt.com/?temporary-chat=true#arcface-module-architecture)
         
--   [Credits](https://chatgpt.com/?temporary-chat=true#credits)
-    
+
 
 ----------
 
