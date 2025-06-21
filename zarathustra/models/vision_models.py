@@ -3,6 +3,7 @@ import torchvision
 import torch.nn as nn
 import torchvision.models as models
 import torch.nn.functional as F
+import os
 
 
 class ConvBNAct(nn.Sequential):
@@ -36,22 +37,6 @@ class ArcFace(nn.Module):
 
 
 class DetectionModule(nn.Module):
-    '''
-    DetectionModule(weights="DEFAULT", device=None, return_decoded=True)
-
-    A custom real-time face detection model built on top of EfficientNet-B0 with a simple FPN-style neck and two heads:
-    one for bounding box regression and another for objectness confidence.
-
-    Args:
-        weights (str): Path to weights file or "DEFAULT" to load from FaceDetectionWeights.pth.
-        device (torch.device or str): The device to run the model on. Auto-detects CUDA if not specified.
-        return_decoded (bool): If True, decodes bounding boxes into pixel coordinates with confidence scores.
-
-    Usage:
-        model = DetectionModule()
-        output = model(image_tensor)
-        output is a list of boxes with format [cx, cy, w, h, confidence] for each image in batch.
-    '''
     def __init__(self, weights="DEFAULT", device=None, return_decoded=True):
         super().__init__()
         self.return_decoded = return_decoded
@@ -73,7 +58,7 @@ class DetectionModule(nn.Module):
             nn.Conv2d(32, 1, 1)
         ).to(self.device)
         if weights is not None:
-            path = "FaceDetectionWeights.pth" if weights == "DEFAULT" else weights
+            path = os.path.join(os.path.dirname(__file__), "FaceDetectionWeights.pth") if weights == "DEFAULT" else weights
             self.load_weights_safe(path)
         self.to(self.device)
 
@@ -122,25 +107,6 @@ class DetectionModule(nn.Module):
 
 
 class RecognitionModule(nn.Module):
-    '''
-    RecognitionModule(emb_dim=384, num_classes=None, s=30.0, m=0.50, weights="DEFAULT", device="cpu")
-
-    A custom face recognition model built using EfficientNet-B0 as a feature extractor, a 1x1 convolution neck,
-    and an ArcFace classification head. If `num_classes` is None, it returns normalized embeddings.
-
-    Args:
-        emb_dim (int): Dimensionality of the output embedding.
-        num_classes (int): Number of identity classes for classification. If None, the model outputs embeddings.
-        s (float): ArcFace scale factor.
-        m (float): ArcFace margin.
-        weights (str): Path to weights file or "DEFAULT" to load from FaceRecognitionWeights.pth.
-        device (torch.device or str): The device to run the model on.
-
-    Usage:
-        model = RecognitionModule(num_classes=1000)
-        logits = model(image_tensor, labels)
-        embeddings = model(image_tensor)
-    '''
     def __init__(self, emb_dim=384, num_classes=None, s=30.0, m=0.50, weights="DEFAULT", device="cpu"):
         super().__init__()
         self.device = device
@@ -154,7 +120,7 @@ class RecognitionModule(nn.Module):
         ).to(self.device)
         self.arcface = ArcFace(emb_dim, num_classes, s=s, m=m).to(self.device) if num_classes is not None else None
         if weights is not None:
-            path = "FaceRecognitionWeights.pth" if weights == "DEFAULT" else weights
+            path = os.path.join(os.path.dirname(__file__), "FaceRecognitionWeights.pth") if weights == "DEFAULT" else weights
             self.load_weights_safe(path)
         self.to(self.device)
 
@@ -179,7 +145,3 @@ class RecognitionModule(nn.Module):
                     own_state[name].copy_(param)
         except:
             pass
-
-
-
-

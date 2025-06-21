@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import os
 
 
 class Embedding(nn.Module):
@@ -121,9 +122,11 @@ class DecoderLayer(nn.Module):
         return output
 
 
+
+
 class Transformer(nn.Module):
     '''
-    Transformer(d_model, d_ff, num_heads, vocab_size, num_layers, max_seq_len, weights="shakespeare.pth")
+    Transformer(d_model, d_ff, num_heads, vocab_size, num_layers, max_seq_len, weights="DEFAULT")
 
     A decoder-only transformer architecture for autoregressive language modeling.
 
@@ -134,19 +137,20 @@ class Transformer(nn.Module):
         vocab_size (int): Number of unique tokens in vocabulary.
         num_layers (int): Number of decoder layers.
         max_seq_len (int): Maximum input sequence length.
-        weights (str): Optional path to load weights from. Default: "shakespeare.pth"
+        weights (str): Optional path to load weights from. Default: "DEFAULT"
 
     Usage:
         model = Transformer(256, 1024, 8, 512, 6, 128)
         logits = model(input_tensor)
     '''
-    def __init__(self, d_model=128, d_ff=512, num_heads=4, vocab_size=100, num_layers=4, max_seq_len=128, weights="shakespeare.pth"):
+    def __init__(self, d_model=128, d_ff=512, num_heads=4, vocab_size=100, num_layers=4, max_seq_len=128, weights="DEFAULT"):
         super().__init__()
         self.embedding = Embedding(vocab_size, d_model, max_seq_len)
         self.decoder_layers = nn.ModuleList([DecoderLayer(d_model, d_ff, num_heads) for _ in range(num_layers)])
         self.final_linear = nn.Linear(d_model, vocab_size)
         if weights is not None:
-            self.load_weights_safe(weights)
+            path = os.path.join(os.path.dirname(__file__), "shakespeare.pth") if weights == "DEFAULT" else weights
+            self.load_weights_safe(path)
 
     def forward(self, x):
         x = self.embedding(x)
@@ -164,6 +168,3 @@ class Transformer(nn.Module):
                     own_state[name].copy_(param)
         except:
             pass
-
-
-
